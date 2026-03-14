@@ -4,10 +4,15 @@ const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 
 // GET /api/users
-router.get('/', protect, authorize('admin'), async (req, res) => {
+router.get('/', protect, authorize('admin', 'instructor'), async (req, res) => {
   const { role, semester, division, search } = req.query;
   let filter = {};
-  if (role) filter.role = role;
+  // Instructors can only fetch students from this endpoint.
+  if (req.user.role === 'instructor') {
+    filter.role = 'student';
+  } else if (role) {
+    filter.role = role;
+  }
   if (semester) filter.semester = semester;
   if (division) filter.division = String(division).toUpperCase();
   if (search) filter.name = { $regex: search, $options: 'i' };
