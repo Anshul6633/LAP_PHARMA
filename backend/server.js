@@ -16,12 +16,24 @@ const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+const isAllowedVercelPreview = (origin) => {
+  try {
+    const url = new URL(origin);
+    // Allow Vercel preview URLs for this project (e.g. lap-pharma-<hash>-<scope>.vercel.app)
+    return url.hostname.endsWith('.vercel.app') && url.hostname.startsWith('lap-pharma');
+  } catch {
+    return false;
+  }
+};
+
 // Security middleware
 app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin || allowedOrigins.includes(origin) || isAllowedVercelPreview(origin)) {
+        return callback(null, true);
+      }
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
